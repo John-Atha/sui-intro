@@ -1,3 +1,3 @@
-# Move Intro
+# Sui Intro
 
-An introduction to the MOVE programming language towards the development of smart contracts
+An introduction to the Sui blockchain towards the development of smart contracts
