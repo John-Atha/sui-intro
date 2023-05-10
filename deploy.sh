@@ -1,1 +1,0 @@
-sui client publish --gas-budget 30000000 /home/atha/sui-intro/test_package
