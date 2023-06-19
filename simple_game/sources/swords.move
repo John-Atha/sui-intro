@@ -50,7 +50,7 @@ module simple_game::swords {
     // the mint and transfer sword function
     // only the forge owner should be able to call this function
     public fun mint_transfer_sword(
-        _forge: &mut Forge,
+        forge: &mut Forge,
         magic: u64,
         strength: u64,
         recipient: address,
@@ -62,6 +62,7 @@ module simple_game::swords {
             magic,
             strength,
         };
+        forge.swords_created = forge.swords_created + 1;
         transfer::public_transfer(new_sword, recipient);
     }
 
@@ -89,6 +90,92 @@ module simple_game::swords {
         };
 
         // end the scenario
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    public fun test_mint_transfer_sword() {
+        let admin = @0xAAAA;
+        let sword_owner = @0xBBBB;
+
+        let scenario_val = test_scenario::begin(admin);
+        let scenario = &mut scenario_val;
+
+        {
+            init(test_scenario::ctx(scenario));
+        };
+
+        test_scenario::next_tx(scenario, admin);
+        {
+            let forge = test_scenario::take_from_sender<Forge>(scenario);
+            mint_transfer_sword(
+                &mut forge,
+                17,
+                42,
+                sword_owner,
+                test_scenario::ctx(scenario),
+            );
+            assert!(forge.swords_created == 1, 2);
+            test_scenario::return_to_sender(scenario, forge);
+        };
+
+        test_scenario::next_tx(scenario, sword_owner);
+        {
+            let sword = test_scenario::take_from_sender<Sword>(scenario);
+            assert!(sword.magic == 17 && sword.strength == 42, 1);
+            test_scenario::return_to_sender(scenario, sword);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    public fun test_transfer_sword() {
+        let admin = @0xAAAA;
+        let initial_owner = @0xBBBB;
+        let final_owner = @0xCCCC;
+
+        let scenario_val = test_scenario::begin(admin);
+        let scenario = &mut scenario_val;
+        
+        // initialize the module
+        {
+            init(test_scenario::ctx(scenario));
+        };
+
+        // mint a sword and transfer it to the initial owner
+        test_scenario::next_tx(scenario, admin);
+        {
+            let magic: u64 = 17;
+            let strength: u64 = 42;
+            let forge = test_scenario::take_from_sender<Forge>(scenario);
+            mint_transfer_sword(
+                &mut forge,
+                magic,
+                strength,
+                initial_owner,
+                test_scenario::ctx(scenario),
+            );
+            assert!(forge.swords_created == 1, 2);
+            test_scenario::return_to_sender(scenario, forge);
+        };
+
+        // transfer the sword to the final owner
+        test_scenario::next_tx(scenario, initial_owner);
+        {
+            let sword = test_scenario::take_from_sender<Sword>(scenario);
+            transfer_sword(sword, final_owner);
+        };
+
+        // take it from the final owner and check some properties
+        test_scenario::next_tx(scenario, final_owner);
+        {
+            let sword = test_scenario::take_from_sender<Sword>(scenario);
+            assert!(sword.magic == 17, 1);
+            assert!(sword.strength == 42, 2);
+            test_scenario::return_to_sender(scenario, sword);
+        };
+
         test_scenario::end(scenario_val);
     }
 }
