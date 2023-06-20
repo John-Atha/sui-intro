@@ -24,7 +24,7 @@ module fungible_tokens::token {
         transfer::public_transfer(treasury_cap, tx_context::sender(ctx));
     }
 
-    public entry fun mint(
+    public fun mint(
         treasury_cap: &mut TreasuryCap<TOKEN>,
         amount: u64,
         recipient_address: address,
@@ -41,10 +41,15 @@ module fungible_tokens::token {
         );
     }
 
-    public entry fun burn(
+    public fun burn(
         treasury_cap: &mut TreasuryCap<TOKEN>,
         coin: Coin<TOKEN>
     ) {
         coin::burn(treasury_cap, coin);
+    }
+
+    #[test_only]
+    public fun test_init(ctx: &mut TxContext) {
+        init(TOKEN {}, ctx)
     }
 }
